@@ -1,0 +1,42 @@
+# Data (Kaggle CSVs)
+data/
+
+# Local documentation and internal modules
+docs/
+src/
+notebooks/04_automacion_experimentos.ipynb
+
+# Environments
+.venv/
+venv/
+env/
+ENV/
+.conda/
+.python-version
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Jupyter
+.ipynb_checkpoints/
+.ipykernel_cache/
+kernel-*.json
+
+# IDEs / editors
+.vscode/
+.idea/
+*.swp
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+logs/
+outputs/
