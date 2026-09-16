@@ -7,8 +7,7 @@ src/
 notebooks/04_automacion_experimentos.ipynb
 
 # Livecoding notebooks (practice, not part of the deliverable)
-notebooks/livecoding_misiones.ipynb
-notebooks/livecoding_misiones_resuelto.ipynb
+notebooks/livecoding_*.ipynb
 
 # Environments
 .venv/
