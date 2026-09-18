@@ -36,13 +36,18 @@ popularidad, PC3 = precio relativo.
 
 **Misión 2 — Entregas.** Se predice la demora en días con variables disponibles al momento del
 pedido (estacionalidad, peso, flete, promesa estimada y zona geográfica). Los tres modelos de árbol
-corren dentro de pipelines con `StandardScaler` y CV de 5 pliegues; se reportan métricas de train y
-test para diagnosticar el sobreajuste, no solo el score ganador.
+(y una versión podada del Decision Tree, para mostrar que el ajuste de hiperparámetros arregla el
+sobreajuste) corren dentro de pipelines con `StandardScaler` y CV de 5 pliegues; se reportan
+métricas de train y test para diagnosticar el sobreajuste, no solo el score ganador.
 
 **Misión 3 — Sentimiento.** No existe columna de sentimiento: se usa `review_score` como proxy
 (4-5 positivo, 1-2 negativo). El texto pasa por un preprocesamiento en portugués — minúsculas,
 stemming RSLP y recuperación explícita de negaciones ("não", "nunca"…) — y se comparan Naive Bayes
-`ComplementNB` (variante para clases desbalanceadas) con SVM lineal.
+`ComplementNB` (variante para clases desbalanceadas) con SVM lineal. El **margen del SVM** se ajusta
+con el parámetro `C` (la "multa" por dejar pasar puntos dentro del margen): un margen demasiado
+rígido (C=100) se pega a los outliers del train ruidoso y baja la exactitud (CV 0.909 vs 0.918),
+así que se trabaja con el **margen blando por defecto, C=1**, que rinde igual que el muy blando
+(C=0.1, 0.919) sin costo de afinado.
 
 ---
 
@@ -50,16 +55,20 @@ stemming RSLP y recuperación explícita de negaciones ("não", "nunca"…) — 
 
 | Problema | Modelo elegido | Lo que importa |
 |---|---|---|
-| **Entregas** | **Gradient Boosting** | MAE ≈ **4.74 días** en test; R² train/test casi idéntico (0.343 / 0.344): el único sin sobreajuste |
-| **Sentimiento** | **LinearSVC** | Accuracy **0.92** (CV 0.918 ± 0.002); recall de clase negativa **0.92** — prioridad para no perder quejas |
+| **Entregas** | **Gradient Boosting** | MAE ≈ **4.74 días** en test; R² train/test casi idéntico (0.342 / 0.343): el único sin sobreajuste |
+| **Sentimiento** | **LinearSVC (margen blando, C=1)** | Accuracy **0.92** (CV 0.918 ± 0.002); recall de clase negativa **0.92** — prioridad para no perder quejas; margen blando/intermedio/rígido (C=0.1/1/100) → CV 0.919/0.918/0.909 |
 | **Catálogo** | **K-Means K=4 + PCA 3D** | Silhouette **0.249**; cuatro segmentos balanceados (11.6% a 40.7%) |
 
 Dos observaciones que se escapan en un resumen de una línea:
 
-- **Decision Tree es el "modelo traicionero".** MAE train 0.019 pero test 6.544, R² test negativo:
-  memoriza el entrenamiento y predice peor que un modelo constante. Random Forest mejora pero
-  todavía sobreajusta (gap de R² 0.560). El diagnóstico honesto del sobreajuste es parte tan
+- **Decision Tree es el "modelo traicionero".** MAE train 0.019 pero test 6.544, R² test negativo
+  (-0.304): memoriza el entrenamiento y predice peor que un modelo constante. Random Forest mejora
+  pero todavía sobreajusta (gap de R² 0.560). El diagnóstico honesto del sobreajuste es parte tan
   importante del resultado como el score final.
+- **La poda devuelve al Decision Tree al juego.** Con `max_depth=12` y `min_samples_leaf=20`, el
+  R² test pasa de **-0.304 a 0.325** y el gap cae de **1.303 a 0.070**: el sobreajuste era del
+  árbol sin podar, no del algoritmo. Todavía por debajo del Gradient Boosting (0.343), pero ya
+  predice mejor que la media.
 - **El techo del problema de entregas.** Con el mejor modelo, R² test llega a ~0.34: alrededor del
   ~66% de la varianza de una demora ocurre en el tramo del transportista (rutas, clima, estado del
   correo), información que el dataset no contiene. Es un límite informativo, no una falla de tuning.
